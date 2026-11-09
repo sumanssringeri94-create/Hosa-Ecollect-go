@@ -5,91 +5,117 @@
 @layer base {
   * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background-color: #0f172a;
-    color: #e2e8f0;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #FBFBF9;
+    color: #1C2621;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Custom subtle scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
   }
   ::-webkit-scrollbar-track {
-    background: #1e293b;
+    background: #F4EFE6;
   }
   ::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 3px;
+    background: #C4CDB4;
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: #A7B393;
   }
 }
 
 @layer components {
+  /* Natural Buttons */
   .btn-primary {
-    @apply bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-forest-900 text-sand-50 hover:bg-forest-800 active:scale-[0.98] font-medium transition-all duration-200 shadow-sm disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium px-5 py-2.5 rounded-lg transition-all duration-200 active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-sand-100 hover:bg-sand-200 text-earth-800 active:scale-[0.98] font-medium transition-all duration-200 border border-sand-300 disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  .btn-danger {
-    @apply bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white active:scale-[0.98] font-medium transition-all duration-200 shadow-sm disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-transparent hover:bg-forest-50 text-forest-900 border border-forest-800/25 active:scale-[0.98] font-medium transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-slate-700/50 text-slate-300 font-medium px-4 py-2 rounded-lg transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-transparent hover:bg-sand-200/60 text-earth-700 active:scale-[0.98] font-medium transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
   }
 
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 active:scale-[0.98] font-medium transition-all duration-200;
+  }
+
+  /* Cards */
   .card {
-    @apply bg-slate-800 border border-slate-700/50 rounded-xl;
+    @apply bg-white border border-sand-200/80 rounded-2xl shadow-card transition-all duration-200;
   }
 
+  .card-hover {
+    @apply hover:shadow-elevated hover:border-sand-300 hover:-translate-y-0.5 transition-all duration-300;
+  }
+
+  .card-soft {
+    @apply bg-sand-50/70 border border-sand-200/80 rounded-2xl;
+  }
+
+  /* Form Elements */
   .input {
-    @apply w-full bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all duration-200;
+    @apply w-full bg-white border border-sand-300 text-earth-900 placeholder:text-earth-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-forest-600/20 focus:border-forest-700 transition-all duration-150;
   }
 
   .label {
-    @apply block text-sm font-medium text-slate-300 mb-1.5;
+    @apply block text-xs font-semibold uppercase tracking-wider text-earth-700 mb-1.5;
   }
 
-  .badge-green {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/15 text-green-400 border border-green-500/25;
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium tracking-wide;
   }
 
-  .badge-yellow {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/15 text-yellow-400 border border-yellow-500/25;
+  .badge-forest {
+    @apply bg-forest-100 text-forest-900 border border-forest-200/70;
   }
 
-  .badge-red {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/25;
+  .badge-olive {
+    @apply bg-olive-100 text-olive-900 border border-olive-200/70;
+  }
+
+  .badge-terracotta {
+    @apply bg-terracotta-100 text-terracotta-800 border border-terracotta-200/70;
+  }
+
+  .badge-amber {
+    @apply bg-amber-50 text-amber-800 border border-amber-200;
   }
 
   .badge-blue {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/25;
+    @apply bg-blue-50 text-blue-800 border border-blue-200;
   }
 
-  .badge-gray {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-700 text-slate-300;
+  .badge-sand {
+    @apply bg-sand-200/80 text-earth-800 border border-sand-300;
   }
 
-  .stat-card {
-    @apply card p-5 flex flex-col gap-1;
-  }
-
-  .page-title {
-    @apply text-2xl font-bold text-white mb-1;
-  }
-
-  .page-subtitle {
-    @apply text-slate-400 text-sm mb-6;
+  /* Editorial Typography */
+  .editorial-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    letter-spacing: -0.02em;
   }
 }
