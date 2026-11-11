@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/common/PageHeader';
+import UserAvatar from '../../components/common/UserAvatar';
 import { User, Mail, Phone, MapPin, Award, Leaf, Save, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -33,13 +34,9 @@ export default function UserProfile() {
         <div className="lg:col-span-8">
           <form onSubmit={handleSave} className="card p-6 sm:p-8 bg-white border border-sand-300 space-y-6">
             <div className="flex items-center gap-4 pb-6 border-b border-sand-200">
-              <img
-                src={
-                  user?.avatar ||
-                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
-                }
-                alt={user?.name || 'Profile'}
-                className="w-16 h-16 rounded-full object-cover border-2 border-forest-200"
+              <UserAvatar
+                name={user?.name}
+                className="w-16 h-16 text-2xl border-2 border-forest-200"
               />
               <div>
                 <h3 className="text-lg font-bold text-earth-950">{user?.name || 'Sarah Chen'}</h3>

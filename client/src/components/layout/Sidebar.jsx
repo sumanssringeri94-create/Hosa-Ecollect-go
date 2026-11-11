@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import UserAvatar from '../common/UserAvatar';
 import {
   LayoutDashboard,
   CalendarPlus,
@@ -203,13 +204,9 @@ export default function Sidebar({ isOpen, onClose, onOpenRoleModal }) {
         <div className="p-4 border-t border-sand-200 bg-[#FAF8F5]">
           <div className="p-3 rounded-2xl bg-white border border-sand-200 flex items-center justify-between gap-2 shadow-2xs">
             <div className="flex items-center gap-2.5 min-w-0">
-              <img
-                src={
-                  user?.avatar ||
-                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-                }
-                alt={user?.name || 'User'}
-                className="w-9 h-9 rounded-full object-cover border border-sand-300 shrink-0"
+              <UserAvatar
+                name={user?.name}
+                className="w-9 h-9 border border-sand-300 shrink-0"
               />
               <div className="min-w-0">
                 <div className="text-xs font-bold text-earth-900 truncate">

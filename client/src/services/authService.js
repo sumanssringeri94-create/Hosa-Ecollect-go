@@ -117,7 +117,6 @@ export const authService = {
       address: userData.address || '',
       status: 'Active',
       joinedDate: new Date().toISOString().split('T')[0],
-      avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80`,
     };
 
     // If registered as recycler, also create entry in recyclers directory

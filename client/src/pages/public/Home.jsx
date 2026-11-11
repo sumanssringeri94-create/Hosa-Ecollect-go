@@ -80,7 +80,7 @@ export default function Home() {
               <h1 className="editorial-title text-4xl sm:text-6xl lg:text-7xl font-bold text-earth-950 leading-[1.08] tracking-tight">
                 Give Your <br />
                 <span className="italic font-normal text-forest-800">E-Waste</span> a Better{' '}
-                <span className="text-terracotta-600 underline decoration-terracotta-300 decoration-wavy decoration-2">
+                <span className="text-terracotta-600">
                   Future.
                 </span>
               </h1>

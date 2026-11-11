@@ -4,6 +4,7 @@ import PageHeader from '../../components/common/PageHeader';
 import SearchBar from '../../components/common/SearchBar';
 import FilterDropdown from '../../components/common/FilterDropdown';
 import Modal from '../../components/common/Modal';
+import UserAvatar from '../../components/common/UserAvatar';
 import { Users, User, ShieldCheck, Factory, Truck, Ban, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -77,10 +78,9 @@ export default function AdminUsers() {
                 <tr key={u.id} className="hover:bg-sand-50/60 transition-colors">
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                        alt={u.name}
-                        className="w-8 h-8 rounded-full object-cover border border-sand-300"
+                      <UserAvatar
+                        name={u.name}
+                        className="w-8 h-8 border border-sand-300"
                       />
                       <div>
                         <div className="font-bold text-earth-950">{u.name}</div>
@@ -170,10 +170,9 @@ export default function AdminUsers() {
         >
           <div className="space-y-4 text-xs">
             <div className="flex items-center gap-3 p-3 rounded-2xl bg-sand-100/70 border border-sand-200">
-              <img
-                src={selectedUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
-                alt={selectedUser.name}
-                className="w-12 h-12 rounded-full object-cover border border-sand-300"
+              <UserAvatar
+                name={selectedUser.name}
+                className="w-12 h-12 border border-sand-300"
               />
               <div>
                 <h4 className="font-bold text-earth-950 text-sm">{selectedUser.name}</h4>

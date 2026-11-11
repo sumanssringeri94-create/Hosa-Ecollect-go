@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import RoleSwitcherModal from './RoleSwitcherModal';
+import UserAvatar from '../common/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { storageService } from '../../services/storageService';
 import {
@@ -152,13 +153,9 @@ export default function DashboardLayout({ children }) {
 
             {/* Profile Avatar */}
             <div className="flex items-center gap-2 pl-1">
-              <img
-                src={
-                  user?.avatar ||
-                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-                }
-                alt={user?.name || 'User'}
-                className="w-9 h-9 rounded-full object-cover border border-sand-300"
+              <UserAvatar
+                name={user?.name}
+                className="w-9 h-9 border border-sand-300"
               />
             </div>
           </div>
