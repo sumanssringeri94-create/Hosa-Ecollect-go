@@ -8,38 +8,47 @@ export const DEMO_PRESET_ACCOUNTS = [
   {
     role: 'user',
     label: 'Citizen User',
-    name: 'Sarah Chen',
-    email: 'sarah.chen@gmail.com',
-    password: 'password123',
+    name: 'Priya Sharma',
+    email: 'priya@example.com',
+    password: 'Demo@123',
     desc: 'Submit, track and view personal e-waste pickups',
     path: '/user/dashboard',
   },
   {
     role: 'admin',
     label: 'Administrator',
-    name: 'Elena Rostova',
-    email: 'admin@ecollect.go',
-    password: 'password123',
+    name: 'Admin User',
+    email: 'admin@ecollectgo.com',
+    password: 'Admin@123',
     desc: 'Verify requests, assign partners, oversee platform analytics',
     path: '/admin/dashboard',
   },
   {
     role: 'recycler',
     label: 'Recycling Facility',
-    name: 'Marcus Vance',
-    email: 'operations@ecocycle.com',
-    password: 'password123',
+    name: 'GreenTech Solutions',
+    email: 'recycler@ecollectgo.com',
+    password: 'Demo@123',
     desc: 'Receive e-waste, manage disassembly & log precious recovery',
     path: '/recycler/dashboard',
   },
   {
     role: 'logistics',
     label: 'Logistics Partner',
-    name: 'Ravi Kumar',
-    email: 'dispatch@greenroute.io',
-    password: 'password123',
+    name: 'SwiftExpress Logistics',
+    email: 'logistics@ecollectgo.com',
+    password: 'Demo@123',
     desc: 'View assigned pickups, execute EV route, deliver to recyclers',
     path: '/logistics/dashboard',
+  },
+  {
+    role: 'user',
+    label: 'Citizen User (Local)',
+    name: 'Sarah Chen',
+    email: 'sarah.chen@gmail.com',
+    password: 'password123',
+    desc: 'Submit, track and view personal e-waste pickups (Local Demo)',
+    path: '/user/dashboard',
   },
 ];
 
@@ -51,28 +60,62 @@ export const authService = {
     } catch (e) {
       console.error(e);
     }
-    // Default to Sarah Chen (Citizen user) so demo can be explored without forcing login first
-    const defaultUser = INITIAL_USERS.find((u) => u.id === 'user-1');
+    // Default to Priya Sharma (Citizen user) so demo can be explored right away
+    const defaultUser = {
+      id: '507f1f77bcf86cd799439011',
+      name: 'Priya Sharma',
+      email: 'priya@example.com',
+      role: 'user',
+      city: 'Bengaluru',
+      phone: '+91 98765 43210',
+      points: 680,
+      level: 'Eco Warrior',
+      status: 'Active',
+      joinedDate: '2026-01-15',
+    };
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(defaultUser));
     return defaultUser;
   },
 
   login: async (email, password) => {
-    // Simulating async network delay
-    await new Promise((r) => setTimeout(r, 400));
+    // 1. Try real backend API first
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        const fullUser = {
+          ...data.user,
+          status: 'Active',
+          joinedDate: new Date().toISOString().split('T')[0],
+        };
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+        localStorage.setItem(AUTH_TOKEN_KEY, data.token || `jwt-${data.user.id}`);
+        return { user: fullUser, token: data.token };
+      }
+    } catch (apiErr) {
+      // Backend not running or unreachable, fallback to local
+      console.warn('Backend /api/auth/login not reachable, falling back to local credentials', apiErr);
+    }
+
+    // 2. Local fallback
+    await new Promise((r) => setTimeout(r, 300));
 
     const users = storageService.getUsers();
     const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
     if (!found) {
-      // Check if matches preset
       const preset = DEMO_PRESET_ACCOUNTS.find((p) => p.email.toLowerCase() === email.toLowerCase());
       if (preset) {
-        const fullUser = INITIAL_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase()) || {
+        const fullUser = {
           id: `user-${Date.now()}`,
           name: preset.name,
           email: preset.email,
           role: preset.role,
+          city: 'Bengaluru',
           status: 'Active',
           joinedDate: new Date().toISOString().split('T')[0],
         };
@@ -93,9 +136,31 @@ export const authService = {
   },
 
   register: async (userData) => {
-    await new Promise((r) => setTimeout(r, 500));
+    // Try backend registration
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        const fullUser = {
+          ...data.user,
+          status: 'Active',
+          joinedDate: new Date().toISOString().split('T')[0],
+        };
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+        localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+        return { user: fullUser, token: data.token };
+      }
+    } catch (apiErr) {
+      console.warn('Backend /api/auth/register not reachable, falling back to local storage', apiErr);
+    }
 
-    // Admin accounts cannot be created via public registration
+    // Local fallback
+    await new Promise((r) => setTimeout(r, 400));
+
     if (userData.role === 'admin') {
       throw new Error('Admin privileges cannot be self-registered. Please contact platform governance.');
     }
@@ -113,13 +178,12 @@ export const authService = {
       role: userData.role || 'user',
       phone: userData.phone || '',
       city: userData.city || 'Bengaluru',
-      organization: userData.organization || '',
+      organization: userData.companyName || userData.organization || '',
       address: userData.address || '',
       status: 'Active',
       joinedDate: new Date().toISOString().split('T')[0],
     };
 
-    // If registered as recycler, also create entry in recyclers directory
     if (newUser.role === 'recycler') {
       storageService.createRecycler({
         name: newUser.name,
@@ -133,7 +197,6 @@ export const authService = {
       });
     }
 
-    // If registered as logistics, also create entry in logistics directory
     if (newUser.role === 'logistics') {
       storageService.createLogistics({
         name: newUser.name,
@@ -156,11 +219,33 @@ export const authService = {
   },
 
   forgotPassword: async (email) => {
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        return { success: true, message: data.message };
+      }
+    } catch (e) {}
     await new Promise((r) => setTimeout(r, 400));
     return { success: true, message: `Password reset instructions sent to ${email}` };
   },
 
-  resetPassword: async (token, newPassword) => {
+  resetPassword: async (token, newPassword, email) => {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword, email }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        return { success: true, message: data.message };
+      }
+    } catch (e) {}
     await new Promise((r) => setTimeout(r, 400));
     return { success: true, message: 'Your password has been successfully reset.' };
   },
@@ -171,7 +256,13 @@ export const authService = {
     const users = storageService.getUsers();
     let target = users.find((u) => u.email === preset.email);
     if (!target) {
-      target = INITIAL_USERS.find((u) => u.email === preset.email);
+      target = INITIAL_USERS.find((u) => u.email === preset.email) || {
+        id: `user-${preset.role}`,
+        name: preset.name,
+        email: preset.email,
+        role: preset.role,
+        status: 'Active',
+      };
     }
     if (target) {
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(target));
