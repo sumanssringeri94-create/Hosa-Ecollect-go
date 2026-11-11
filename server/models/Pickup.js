@@ -13,6 +13,44 @@ const pickupSchema = new mongoose.Schema(
         ref: 'WasteItem',
       },
     ],
+    recycler: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    logisticsPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    category: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    deviceName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    quantity: {
+      type: Number,
+      default: 1,
+    },
+    weight: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    condition: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    image: {
+      type: String,
+      default: '',
+    },
     address: {
       type: String,
       required: [true, 'Pickup address is required'],
@@ -35,12 +73,50 @@ const pickupSchema = new mongoose.Schema(
     timeSlot: {
       type: String,
       required: [true, 'Time slot is required'],
-      enum: ['9 AM - 12 PM', '12 PM - 3 PM', '3 PM - 6 PM'],
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected', 'completed'],
+      enum: [
+        'pending',
+        'verified',
+        'assigned',
+        'pickup_scheduled',
+        'collected',
+        'recycling_in_progress',
+        'completed',
+        'rejected',
+      ],
       default: 'pending',
+    },
+    recyclerStatus: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'processing', 'completed'],
+      default: 'pending',
+    },
+    logisticsStatus: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'in_transit', 'delivered'],
+      default: 'pending',
+    },
+    receivedWeight: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    recoveredMaterials: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    processingNotes: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    pickupNotes: {
+      type: String,
+      trim: true,
+      default: '',
     },
     notes: {
       type: String,

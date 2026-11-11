@@ -4,32 +4,22 @@ const router = express.Router();
 const {
   register,
   login,
-  getMe
+  getMe,
+  updateProfile,
+  forgotPassword,
+  resetPassword,
 } = require('../controllers/authController');
 
 const { protect } = require('../middleware/auth');
 
-// POST /api/auth/register
-router.post('/register', async (req, res) => {
-  try {
-    await register(req, res);
-  } catch (error) {
-    console.error("REGISTER ROUTE ERROR:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
+// Public routes
+router.post('/register', register);
+router.post('/login', login);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
-  try {
-    await login(req, res);
-  } catch (error) {
-    console.error("LOGIN ROUTE ERROR:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// GET /api/auth/me
+// Protected routes
 router.get('/me', protect, getMe);
+router.put('/profile', protect, updateProfile);
 
 module.exports = router;

@@ -36,8 +36,41 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'admin', 'recycler', 'logistics'],
       default: 'user',
+    },
+    companyName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    companyAddress: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    wasteCategories: {
+      type: [String],
+      default: [],
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    serviceArea: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    vehicleType: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    availability: {
+      type: String,
+      enum: ['available', 'busy', 'offline'],
+      default: 'available',
     },
     points: {
       type: Number,

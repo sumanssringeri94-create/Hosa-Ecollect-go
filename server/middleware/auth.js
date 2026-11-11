@@ -22,7 +22,10 @@ const protect = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ecollect_default_secret_key_2026');
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'ecollect_default_secret_key_2026'
+    );
 
     // Find user
     const user = await User.findById(decoded.id);
@@ -61,4 +64,17 @@ const adminOnly = (req, res, next) => {
   });
 };
 
-module.exports = { protect, adminOnly };
+// Authorize specific roles
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `User role '${req.user ? req.user.role : 'unauthorized'}' is not authorized to access this route.`,
+      });
+    }
+    next();
+  };
+};
+
+module.exports = { protect, adminOnly, authorize };
