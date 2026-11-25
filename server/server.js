@@ -1,4 +1,11 @@
 ﻿require('dotenv').config();
+
+// Refuse to start without JWT_SECRET
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET environment variable is missing. Server cannot start.');
+  process.exit(1);
+}
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -13,20 +20,17 @@ const app = express();
 // --- CORS ---
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:5173",
-  "https://ecollect-go.vercel.app",
-  "https://ecollect-go-1.onrender.com",
+  "https://hosa-ecollect-go.vercel.app",
   process.env.CLIENT_URL
 ].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      return callback(null, true); // Allow during development
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
     }
   },
   credentials: true,
@@ -70,6 +74,14 @@ app.use((req, res) => {
 
 // --- Global error handler ---
 app.use(errorHandler);
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 // --- Start ---
 const PORT = process.env.PORT || 5000;
