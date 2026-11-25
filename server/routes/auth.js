@@ -11,10 +11,11 @@ const {
 } = require('../controllers/authController');
 
 const { protect } = require('../middleware/auth');
+const { registerValidator, loginValidator } = require('../middleware/validators');
 
 // Public routes
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', registerValidator, register);
+router.post('/login', loginValidator, login);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 

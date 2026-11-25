@@ -75,10 +75,10 @@ const register = async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long.',
+        message: 'Password must be at least 8 characters long.',
       });
     }
 
@@ -296,8 +296,8 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and new password required.' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
     }
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });

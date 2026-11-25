@@ -8,12 +8,13 @@ const {
   getAllWasteItems,
 } = require('../controllers/wasteController');
 const { protect, adminOnly } = require('../middleware/auth');
+const { wasteValidator } = require('../middleware/validators');
 
 // GET  /api/waste/categories  (public)
 router.get('/categories', getCategories);
 
 // POST /api/waste
-router.post('/', protect, addWasteItem);
+router.post('/', protect, wasteValidator, addWasteItem);
 
 // GET  /api/waste/my
 router.get('/my', protect, getMyWasteItems);

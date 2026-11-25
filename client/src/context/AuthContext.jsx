@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService, DEMO_PRESET_ACCOUNTS } from '../services/authService';
-import { initializeDemoData } from '../services/storageService';
+import { authApi } from '../api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext(null);
@@ -9,12 +9,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize demo data in localStorage on mount
   useEffect(() => {
-    initializeDemoData();
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     setLoading(false);
+
+    // Listen for unauthorized 401 events from axios interceptor
+    const handleUnauthorized = () => {
+      setUser(null);
+      toast.error('Session expired. Please log in again.');
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const login = async (email, password) => {
@@ -57,7 +65,18 @@ export const AuthProvider = ({ children }) => {
     return null;
   }, []);
 
-  const updateUserProfile = (updatedFields) => {
+  const updateUserProfile = async (updatedFields) => {
+    try {
+      const res = await authApi.updateProfile(updatedFields);
+      if (res.success && res.user) {
+        setUser(res.user);
+        localStorage.setItem('ecg_auth_current_user', JSON.stringify(res.user));
+        toast.success('Profile preferences updated.');
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend profile update failed, saving locally:', err.message);
+    }
     const updated = { ...user, ...updatedFields };
     setUser(updated);
     localStorage.setItem('ecg_auth_current_user', JSON.stringify(updated));

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { storageService } from '../../services/storageService';
+import { adminApi, pickupsApi } from '../../api';
 import {
   MONTHLY_COLLECTION_DATA,
   CATEGORY_DISTRIBUTION,
@@ -9,6 +9,8 @@ import StatCard from '../../components/common/StatCard';
 import ChartCard from '../../components/common/ChartCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import PageHeader from '../../components/common/PageHeader';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import EmptyState from '../../components/common/EmptyState';
 import {
   Package,
   Clock,
@@ -34,17 +36,42 @@ import {
   Cell,
   Legend,
 } from 'recharts';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
-  const requests = storageService.getRequests();
-  const users = storageService.getUsers();
-  const recyclers = storageService.getRecyclers();
-  const logistics = storageService.getLogistics();
-  const auditLogs = storageService.getAuditLogs();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalRequests: 0,
+    pendingVerification: 0,
+    verified: 0,
+    activeCollections: 0,
+    completedRecycling: 0,
+    totalUsers: 0,
+    registeredRecyclers: 0,
+    registeredLogistics: 0,
+  });
+  const [recentRequests, setRecentRequests] = useState([]);
 
-  const pendingVerification = requests.filter((r) => r.status === 'submitted');
-  const activeCollections = requests.filter((r) => ['verified', 'assigned', 'scheduled', 'collected'].includes(r.status));
-  const completedRecycling = requests.filter((r) => r.status === 'completed');
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const res = await adminApi.getDashboard();
+      if (res && res.stats) {
+        setStats(res.stats);
+        setRecentRequests(res.recentRequests || []);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to load dashboard metrics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const pendingVerificationCount = stats.pendingVerification || 0;
 
   return (
     <div className="space-y-8">
@@ -56,66 +83,70 @@ export default function AdminDashboard() {
         actions={
           <div className="flex items-center gap-2">
             <Link to="/admin/assignments" className="btn-primary text-xs py-2 px-3.5 shadow-sm">
-              <ShieldCheck size={14} /> Assign Pending ({pendingVerification.length})
+              <ShieldCheck size={14} /> Assign Pending ({pendingVerificationCount})
             </Link>
           </div>
         }
       />
 
       {/* 7 Key Admin Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-        <StatCard
-          icon={Package}
-          label="Total Requests"
-          value={requests.length}
-          trend="+12%"
-          colorScheme="forest"
-          className="col-span-2 sm:col-span-1"
-        />
-        <StatCard
-          icon={Clock}
-          label="Pending Verification"
-          value={pendingVerification.length}
-          trend="Action required"
-          trendPositive={false}
-          colorScheme="terracotta"
-        />
-        <StatCard
-          icon={Truck}
-          label="Active Collections"
-          value={activeCollections.length}
-          subtext="In transit"
-          colorScheme="olive"
-        />
-        <StatCard
-          icon={CheckCircle2}
-          label="Completed"
-          value={completedRecycling.length}
-          subtext="100% certified"
-          colorScheme="forest"
-        />
-        <StatCard
-          icon={Users}
-          label="Total Users"
-          value={users.length}
-          trend="Active"
-          colorScheme="sand"
-        />
-        <StatCard
-          icon={Factory}
-          label="Recyclers"
-          value={recyclers.length}
-          subtext="Certified labs"
-          colorScheme="sand"
-        />
-        <StatCard
-          icon={Truck}
-          label="Logistics"
-          value={logistics.length}
-          subtext="EV Fleets"
-          colorScheme="sand"
-        />
-      </div>
+      {loading ? (
+        <LoadingSkeleton type="stat" count={7} className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-7" />
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+          <StatCard
+            icon={Package}
+            label="Total Requests"
+            value={stats.totalRequests}
+            trend="+12%"
+            colorScheme="forest"
+            className="col-span-2 sm:col-span-1"
+          />
+          <StatCard
+            icon={Clock}
+            label="Pending Verification"
+            value={stats.pendingVerification}
+            trend="Action required"
+            trendPositive={false}
+            colorScheme="terracotta"
+          />
+          <StatCard
+            icon={Truck}
+            label="Active Collections"
+            value={stats.activeCollections}
+            subtext="In transit"
+            colorScheme="olive"
+          />
+          <StatCard
+            icon={CheckCircle2}
+            label="Completed"
+            value={stats.completedRecycling}
+            subtext="100% certified"
+            colorScheme="forest"
+          />
+          <StatCard
+            icon={Users}
+            label="Total Users"
+            value={stats.totalUsers}
+            trend="Active"
+            colorScheme="sand"
+          />
+          <StatCard
+            icon={Factory}
+            label="Recyclers"
+            value={stats.registeredRecyclers}
+            subtext="Certified labs"
+            colorScheme="sand"
+          />
+          <StatCard
+            icon={Truck}
+            label="Logistics"
+            value={stats.registeredLogistics}
+            subtext="EV Fleets"
+            colorScheme="sand"
+          />
+        </div>
+      )}
 
       {/* 2 Recharts: Trends & Category Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -213,89 +244,118 @@ export default function AdminDashboard() {
               to="/admin/pickups"
               className="text-xs font-semibold text-forest-800 hover:underline flex items-center gap-1"
             >
-              All Requests ({requests.length}) <ArrowRight size={13} />
+              All Requests ({stats.totalRequests || recentRequests.length}) <ArrowRight size={13} />
             </Link>
           </div>
 
           <div className="card overflow-hidden bg-white border border-sand-300 shadow-card">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-earth-800">
-                <thead className="bg-sand-50 border-b border-sand-200 text-earth-900 uppercase font-semibold text-[11px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">User / Org</th>
-                    <th className="py-3 px-4">Device Specification</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Quick Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-sand-200/80">
-                  {requests.slice(0, 5).map((req) => (
-                    <tr key={req.id} className="hover:bg-sand-50/60 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-forest-900">
-                        {req.id}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-earth-900">{req.userName}</div>
-                        <div className="text-[11px] text-earth-400">{req.city}</div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-medium text-earth-900 truncate max-w-xs">{req.deviceName}</div>
-                        <div className="text-[11px] text-earth-500">{req.category} • {req.weight}kg</div>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <StatusBadge status={req.status} size="xs" />
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <Link
-                          to={`/admin/pickups`}
-                          className="btn-secondary text-[11px] py-1 px-2.5"
-                        >
-                          Manage
-                        </Link>
-                      </td>
+              {loading ? (
+                <div className="p-4">
+                  <LoadingSkeleton type="table" count={5} />
+                </div>
+              ) : recentRequests.length === 0 ? (
+                <div className="p-8">
+                  <EmptyState
+                    title="No manifests in queue"
+                    description="Incoming collection requests will appear here once submitted by users."
+                  />
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs text-earth-800">
+                  <thead className="bg-sand-50 border-b border-sand-200 text-earth-900 uppercase font-semibold text-[11px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">ID</th>
+                      <th className="py-3 px-4">User / Org</th>
+                      <th className="py-3 px-4">Device Specification</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Quick Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-sand-200/80">
+                    {recentRequests.slice(0, 5).map((req) => {
+                      const reqId = req._id || req.id;
+                      const shortId = reqId ? reqId.toString().slice(-6).toUpperCase() : 'REQ';
+                      const userName = req.user?.name || req.userName || 'Citizen User';
+                      const city = req.user?.city || req.city || 'Bengaluru';
+                      const deviceName = req.deviceName || req.items?.[0]?.itemName || req.category || 'Electronic Item';
+                      const category = req.category || req.items?.[0]?.category || 'General E-Waste';
+                      const weight = req.weight || req.estimatedWeight || '1.0';
+
+                      return (
+                        <tr key={reqId} className="hover:bg-sand-50/60 transition-colors">
+                          <td className="py-3.5 px-4 font-mono font-bold text-forest-900">
+                            #{shortId}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="font-semibold text-earth-900">{userName}</div>
+                            <div className="text-[11px] text-earth-400">{city}</div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="font-medium text-earth-900 truncate max-w-xs">{deviceName}</div>
+                            <div className="text-[11px] text-earth-500">{category} • {weight}kg</div>
+                          </td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <StatusBadge status={req.status} size="xs" />
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <Link
+                              to={`/admin/pickups`}
+                              className="btn-secondary text-[11px] py-1 px-2.5"
+                            >
+                              Manage
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right: Recent Audit Activities */}
+        {/* Right: Quick Links / Governance Actions */}
         <div className="lg:col-span-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-earth-900">
-              Audit Activity Stream
+              Governance Actions
             </h3>
-            <span className="text-[10px] text-earth-400 font-mono">Live Logs</span>
+            <span className="text-[10px] text-earth-400 font-mono">Active</span>
           </div>
 
           <div className="card p-5 bg-sand-50/60 border border-sand-300 space-y-3.5">
-            {auditLogs.slice(0, 5).map((log) => (
-              <div key={log.id} className="pb-3 border-b border-sand-200/80 last:border-b-0 last:pb-0">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-xs font-bold text-earth-900">
-                    {log.action}
-                  </span>
-                  <span className="text-[10px] text-earth-400 shrink-0 font-mono">
-                    {log.time}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mt-1 text-[11px] text-earth-600">
-                  <span className="font-mono text-forest-800 font-semibold">{log.target}</span>
-                  <span>•</span>
-                  <span>by {log.actor}</span>
-                </div>
+            <div className="pb-3 border-b border-sand-200/80">
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-xs font-bold text-earth-900">Custody Assignments</span>
+                <span className="badge badge-sand text-[10px]">{stats.pendingVerification} pending</span>
               </div>
-            ))}
+              <p className="text-[11px] text-earth-600 mt-1">Pair unallocated manifests with verified recycling labs and green courier fleets.</p>
+              <Link to="/admin/assignments" className="text-xs font-semibold text-forest-800 hover:underline block mt-2">
+                Open Assignment Matrix →
+              </Link>
+            </div>
 
-            <div className="pt-2">
-              <Link
-                to="/admin/settings"
-                className="text-xs font-semibold text-forest-800 hover:underline block text-center"
-              >
-                View Full System Ledger →
+            <div className="pb-3 border-b border-sand-200/80">
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-xs font-bold text-earth-900">Partner Facility Audits</span>
+                <span className="badge badge-sand text-[10px]">{stats.registeredRecyclers} labs</span>
+              </div>
+              <p className="text-[11px] text-earth-600 mt-1">Review state pollution control compliance certifications and process capacities.</p>
+              <Link to="/admin/recyclers" className="text-xs font-semibold text-forest-800 hover:underline block mt-2">
+                Manage Recycler Facilities →
+              </Link>
+            </div>
+
+            <div>
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-xs font-bold text-earth-900">Zero-Emission Fleet Logistics</span>
+                <span className="badge badge-sand text-[10px]">{stats.registeredLogistics} fleets</span>
+              </div>
+              <p className="text-[11px] text-earth-600 mt-1">Monitor EV courier availability, service zones, and route payloads.</p>
+              <Link to="/admin/logistics" className="text-xs font-semibold text-forest-800 hover:underline block mt-2">
+                Manage Logistics Directory →
               </Link>
             </div>
           </div>

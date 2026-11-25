@@ -8,6 +8,8 @@ if (!process.env.JWT_SECRET) {
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
@@ -16,6 +18,31 @@ const errorHandler = require('./middleware/errorHandler');
 connectDB();
 
 const app = express();
+
+// --- Security Headers (Helmet) ---
+app.use(helmet());
+
+// --- Rate Limiting ---
+// Global looser limit: 100 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes.' },
+});
+app.use('/api', globalLimiter);
+
+// Strict auth limit: 10 requests per 15 minutes per IP on login and register
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes.' },
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // --- CORS ---
 const allowedOrigins = [
@@ -30,7 +57,9 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      const corsErr = new Error(`Origin ${origin} Not allowed by CORS`);
+      corsErr.statusCode = 403;
+      return callback(corsErr);
     }
   },
   credentials: true,
@@ -40,8 +69,9 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // --- Middleware ---
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// Reduced body parser limit to 1mb
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));

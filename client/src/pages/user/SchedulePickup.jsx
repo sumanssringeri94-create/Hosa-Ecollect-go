@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { storageService } from '../../services/storageService';
+import { pickupsApi } from '../../api';
 import { INITIAL_CATEGORIES } from '../../data/mockData';
 import PageHeader from '../../components/common/PageHeader';
 import ImageUploader from '../../components/forms/ImageUploader';
@@ -42,7 +42,7 @@ export default function SchedulePickup() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.deviceName) {
@@ -57,18 +57,26 @@ export default function SchedulePickup() {
     setIsSubmitting(true);
 
     try {
-      const createdRequest = storageService.createRequest({
-        userId: user?.id || 'user-1',
-        userName: user?.name || 'Sarah Chen',
-        userEmail: user?.email || 'sarah.chen@gmail.com',
-        userPhone: user?.phone || '+91 98860 12345',
-        ...formData,
+      const res = await pickupsApi.schedulePickup({
+        category: formData.category,
+        deviceName: formData.deviceName,
+        quantity: Number(formData.quantity) || 1,
+        weight: `${formData.weight} kg`,
+        condition: formData.condition,
+        address: formData.pickupAddress,
+        city: formData.city,
+        pincode: formData.pincode,
+        scheduledDate: formData.preferredDate,
+        timeSlot: formData.preferredTime,
+        notes: formData.notes,
+        image: formData.imageUrl,
       });
 
-      toast.success(`Request ${createdRequest.id} scheduled successfully! 🎉`);
+      const reqId = res.pickup?._id ? res.pickup._id.slice(-6) : 'NEW';
+      toast.success(`Pickup request #${reqId} submitted successfully! 🌱`);
       navigate('/user/pickups');
     } catch (err) {
-      toast.error('Failed to submit request. Please try again.');
+      toast.error(err.message || 'Failed to submit pickup request. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

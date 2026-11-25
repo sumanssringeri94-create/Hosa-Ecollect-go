@@ -18,6 +18,13 @@ export const STATUS_CONFIG = {
     border: 'border-amber-200/80',
     icon: Clock,
   },
+  pending: {
+    label: 'Submitted',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200/80',
+    icon: Clock,
+  },
   verified: {
     label: 'Verified',
     bg: 'bg-blue-50',
@@ -39,6 +46,13 @@ export const STATUS_CONFIG = {
     border: 'border-sand-300',
     icon: Calendar,
   },
+  pickup_scheduled: {
+    label: 'Pickup Scheduled',
+    bg: 'bg-sand-200/80',
+    text: 'text-earth-800',
+    border: 'border-sand-300',
+    icon: Calendar,
+  },
   collected: {
     label: 'Collected',
     bg: 'bg-forest-100',
@@ -47,6 +61,13 @@ export const STATUS_CONFIG = {
     icon: Truck,
   },
   in_recycling: {
+    label: 'Recycling in Progress',
+    bg: 'bg-terracotta-100',
+    text: 'text-terracotta-800',
+    border: 'border-terracotta-200',
+    icon: RotateCw,
+  },
+  recycling_in_progress: {
     label: 'Recycling in Progress',
     bg: 'bg-terracotta-100',
     text: 'text-terracotta-800',

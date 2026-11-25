@@ -48,8 +48,9 @@ function loadDB() {
       db = JSON.parse(data);
       if (!db.notifications) db.notifications = [];
       if (!db.users || !db.users.some(u => u.role === 'recycler')) {
-        // Re-seed if older schema lacks recycler/logistics
-        initSeedData();
+        if (process.env.NODE_ENV !== 'production' || process.env.SEED_DEMO === 'true') {
+          initSeedData();
+        }
         return;
       }
       return;
@@ -57,7 +58,12 @@ function loadDB() {
       console.warn('Could not read local DB file, reinitializing...');
     }
   }
-  initSeedData();
+  if (process.env.NODE_ENV !== 'production' || process.env.SEED_DEMO === 'true') {
+    initSeedData();
+  } else {
+    db = { users: [], wasteitems: [], pickups: [], centers: [], notifications: [] };
+    saveDB();
+  }
 }
 
 // Seed Initial Data

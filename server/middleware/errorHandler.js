@@ -2,6 +2,12 @@ const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
 
+  // CORS error
+  if (err.message && (err.message.includes('CORS') || err.message.includes('Not allowed by CORS'))) {
+    statusCode = 403;
+    message = 'Access forbidden: Origin not allowed by CORS policy';
+  }
+
   // Mongoose duplicate key error
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];

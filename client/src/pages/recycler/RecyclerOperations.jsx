@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { storageService } from '../../services/storageService';
+import React, { useState, useEffect } from 'react';
+import { recyclersApi } from '../../api';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import Modal from '../../components/common/Modal';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import EmptyState from '../../components/common/EmptyState';
 import {
   RotateCw,
   Scale,
@@ -16,11 +18,9 @@ import {
 import toast from 'react-hot-toast';
 
 export default function RecyclerOperations() {
-  const [requests, setRequests] = useState(storageService.getRequests());
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedReq, setSelectedReq] = useState(null);
-
-  // Bench jobs in progress or ready for processing
-  const benchJobs = requests.filter((r) => ['collected', 'in_recycling'].includes(r.status));
 
   // Operations modal form
   const [opsForm, setOpsForm] = useState({
@@ -33,70 +33,93 @@ export default function RecyclerOperations() {
     currentStage: 'Hydrometallurgy Leaching & Plastic Granulation',
   });
 
+  const loadRequests = async () => {
+    try {
+      setLoading(true);
+      const res = await recyclersApi.getAssignedRequests();
+      setRequests(res.pickups || []);
+    } catch (err) {
+      toast.error(err.message || 'Failed to load requests');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRequests();
+  }, []);
+
+  // Bench jobs in progress or ready for processing
+  const benchJobs = requests.filter((r) =>
+    ['collected', 'in_recycling', 'recycling_in_progress'].includes(r.status) ||
+    r.recyclerStatus === 'processing' ||
+    r.logisticsStatus === 'delivered'
+  );
+
   const handleOpenOpsModal = (req) => {
     setSelectedReq(req);
-    const existing = req.recyclingData || {};
+    const existing = req.recoveredMaterials || {};
     setOpsForm({
-      receivedWeight: existing.receivedWeight || req.weight || 2.5,
-      goldGrams: existing.recoveredMaterials?.goldGrams || 0.25,
-      copperKg: existing.recoveredMaterials?.copperKg || 0.85,
-      aluminumKg: existing.recoveredMaterials?.aluminumKg || 1.2,
-      plasticsKg: existing.recoveredMaterials?.plasticsKg || 0.75,
-      notes: existing.notes || 'Component separation completed without thermal emissions.',
-      currentStage: existing.currentStage || 'Material Assaying',
+      receivedWeight: req.receivedWeight || req.weight || req.estimatedWeight || 2.5,
+      goldGrams: existing.goldGrams || 0.25,
+      copperKg: existing.copperKg || 0.85,
+      aluminumKg: existing.aluminumKg || 1.2,
+      plasticsKg: existing.plasticsKg || 0.75,
+      notes: req.processingNotes || 'Component separation completed without thermal emissions.',
+      currentStage: req.recyclerStatus === 'processing' ? 'Assaying Secondary Raw Materials' : 'Hydrometallurgy Leaching & Plastic Granulation',
     });
   };
 
-  const handleSaveProgress = (e) => {
+  const handleSaveProgress = async (e) => {
     e.preventDefault();
     if (!selectedReq) return;
+    const reqId = selectedReq._id || selectedReq.id;
 
-    storageService.updateRecyclingData(
-      selectedReq.id,
-      {
+    try {
+      await recyclersApi.updateOperations(reqId, {
         receivedWeight: opsForm.receivedWeight,
-        currentStage: opsForm.currentStage,
         recoveredMaterials: {
           goldGrams: opsForm.goldGrams,
           copperKg: opsForm.copperKg,
           aluminumKg: opsForm.aluminumKg,
           plasticsKg: opsForm.plasticsKg,
         },
-        notes: opsForm.notes,
-      },
-      false // not completed yet
-    );
+        processingNotes: opsForm.notes,
+        status: 'processing',
+      });
 
-    toast.success(`Updated assay progress for ${selectedReq.id}!`);
-    setSelectedReq(null);
-    setRequests(storageService.getRequests());
+      toast.success(`Updated assay progress for #${reqId.toString().slice(-6)}!`);
+      setSelectedReq(null);
+      await loadRequests();
+    } catch (err) {
+      toast.error(err.message || 'Failed to update progress');
+    }
   };
 
-  const handleCompleteRecycling = () => {
+  const handleCompleteRecycling = async () => {
     if (!selectedReq) return;
-
+    const reqId = selectedReq._id || selectedReq.id;
     const certId = `ECG-CERT-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    storageService.updateRecyclingData(
-      selectedReq.id,
-      {
+    try {
+      await recyclersApi.updateOperations(reqId, {
         receivedWeight: opsForm.receivedWeight,
-        currentStage: 'Completed & Certified',
         recoveredMaterials: {
           goldGrams: opsForm.goldGrams,
           copperKg: opsForm.copperKg,
           aluminumKg: opsForm.aluminumKg,
           plasticsKg: opsForm.plasticsKg,
         },
-        certificateId: certId,
-        notes: opsForm.notes,
-      },
-      true // mark complete!
-    );
+        processingNotes: `${opsForm.notes} | Certificate: ${certId}`,
+        status: 'completed',
+      });
 
-    toast.success(`Recycling fully completed! Issued certificate ${certId} 🏅`);
-    setSelectedReq(null);
-    setRequests(storageService.getRequests());
+      toast.success(`Recycling fully completed! Issued certificate ${certId} 🏅`);
+      setSelectedReq(null);
+      await loadRequests();
+    } catch (err) {
+      toast.error(err.message || 'Failed to complete recycling');
+    }
   };
 
   return (
@@ -107,63 +130,82 @@ export default function RecyclerOperations() {
         badge={`${benchJobs.length} Active Workstations`}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {benchJobs.map((job) => (
-          <div
-            key={job.id}
-            className="card p-6 bg-white border border-sand-300 flex flex-col justify-between space-y-4 hover:border-terracotta-300 transition-colors"
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs font-bold text-forest-900 bg-sand-100 px-2 py-0.5 rounded">
-                  {job.id}
-                </span>
-                <StatusBadge status={job.status} size="xs" />
-              </div>
+      {loading ? (
+        <LoadingSkeleton type="card" count={4} />
+      ) : benchJobs.length === 0 ? (
+        <EmptyState
+          icon={RotateCw}
+          title="No workstations currently active"
+          description="Delivered e-waste shipments ready for bench dismantling and material recovery will appear here."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {benchJobs.map((job) => {
+            const reqId = job._id || job.id;
+            const shortId = reqId ? reqId.toString().slice(-6).toUpperCase() : 'JOB';
+            const devName = job.deviceName || job.items?.[0]?.itemName || job.category || 'Electronic Item';
+            const category = job.category || job.items?.[0]?.category || 'E-Waste';
+            const condition = job.condition || job.items?.[0]?.condition || 'Standard';
+            const weight = job.weight || job.estimatedWeight || '1.0';
 
-              <div>
-                <h4 className="text-base font-bold text-earth-950 font-sans">{job.deviceName}</h4>
-                <p className="text-xs text-earth-500">{job.category} • Condition: {job.condition}</p>
-              </div>
-
-              <div className="p-3 bg-sand-50/70 rounded-xl border border-sand-200 text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-earth-500">Intake Scale Weight:</span>
-                  <span className="font-bold text-earth-900">{job.weight} kg</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-earth-500">Current Bench Stage:</span>
-                  <span className="font-semibold text-terracotta-700">
-                    {job.recyclingData?.currentStage || 'Intake Dock / Sorting'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-sand-200 flex items-center justify-between">
-              <span className="text-[11px] text-earth-400">
-                Facility: EcoCycle Hub A
-              </span>
-
-              <button
-                type="button"
-                onClick={() => handleOpenOpsModal(job)}
-                className="btn-accent text-xs py-1.5 px-4 shadow-xs"
+            return (
+              <div
+                key={reqId}
+                className="card p-6 bg-white border border-sand-300 flex flex-col justify-between space-y-4 hover:border-terracotta-300 transition-colors"
               >
-                Log Operations Assay →
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-bold text-forest-900 bg-sand-100 px-2 py-0.5 rounded">
+                      #{shortId}
+                    </span>
+                    <StatusBadge status={job.status} size="xs" />
+                  </div>
+
+                  <div>
+                    <h4 className="text-base font-bold text-earth-950 font-sans">{devName}</h4>
+                    <p className="text-xs text-earth-500">{category} • Condition: {condition}</p>
+                  </div>
+
+                  <div className="p-3 bg-sand-50/70 rounded-xl border border-sand-200 text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-earth-500">Intake Scale Weight:</span>
+                      <span className="font-bold text-earth-900">{weight} kg</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-earth-500">Current Bench Stage:</span>
+                      <span className="font-semibold text-terracotta-700">
+                        {job.recyclerStatus === 'processing' ? 'Active Assay / Disassembly' : 'Dock Check-in Complete'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-sand-200 flex items-center justify-between">
+                  <span className="text-[11px] text-earth-400">
+                    Facility: CleanTech Hub
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenOpsModal(job)}
+                    className="btn-accent text-xs py-1.5 px-4 shadow-xs"
+                  >
+                    Log Operations Assay →
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Operations Assay Modal */}
       {selectedReq && (
         <Modal
           isOpen={!!selectedReq}
           onClose={() => setSelectedReq(null)}
-          title={`Operations Log: ${selectedReq.id}`}
-          subtitle={`Device: ${selectedReq.deviceName} (${selectedReq.category})`}
+          title={`Operations Log: #${(selectedReq._id || selectedReq.id || '').toString().slice(-6).toUpperCase()}`}
+          subtitle={`Device: ${selectedReq.deviceName || selectedReq.items?.[0]?.itemName || selectedReq.category}`}
           maxWidth="max-w-2xl"
         >
           <form onSubmit={handleSaveProgress} className="space-y-5">

@@ -15,9 +15,10 @@ const {
   getAnalytics,
 } = require('../controllers/pickupController');
 const { protect, adminOnly } = require('../middleware/auth');
+const { pickupValidator } = require('../middleware/validators');
 
 // Public/User pickup routes
-router.post('/', protect, schedulePickup);
+router.post('/', protect, pickupValidator, schedulePickup);
 router.get('/my', protect, getMyPickups);
 router.get('/:id', protect, getPickupDetails);
 router.delete('/:id', protect, cancelPickup);
