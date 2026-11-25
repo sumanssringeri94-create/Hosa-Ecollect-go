@@ -4,11 +4,23 @@ import PageHeader from '../../components/common/PageHeader';
 import ChartCard from '../../components/common/ChartCard';
 import StatCard from '../../components/common/StatCard';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
-import {
-  MONTHLY_COLLECTION_DATA,
-  CATEGORY_DISTRIBUTION,
-  SAMPLE_IMPACT_METRICS,
-} from '../../data/mockData';
+
+const DEFAULT_CATEGORY_DISTRIBUTION = [
+  { name: 'Laptop/PC', value: 38, color: '#1C3A27' },
+  { name: 'Mobile Phone', value: 27, color: '#D97746' },
+  { name: 'TV/Monitor', value: 16, color: '#556B2F' },
+  { name: 'Battery', value: 11, color: '#C87D2A' },
+  { name: 'Charger/Cable', value: 8, color: '#7C8B82' },
+];
+
+const DEFAULT_MONTHLY_COLLECTION_DATA = [
+  { month: 'Jun', collected: 120, recycled: 110 },
+  { month: 'Jul', collected: 190, recycled: 175 },
+  { month: 'Aug', collected: 240, recycled: 220 },
+  { month: 'Sep', collected: 310, recycled: 290 },
+  { month: 'Oct', collected: 380, recycled: 350 },
+  { month: 'Nov', collected: 210, recycled: 135 },
+];
 import {
   BarChart,
   Bar,
@@ -55,7 +67,7 @@ export default function AdminReports() {
 
   const totalDiverted = reportData?.totalCollectedKg ? `${(reportData.totalCollectedKg / 1000).toFixed(1)} Tonnes` : '142.8 Tonnes';
   const recyclingRate = reportData?.recyclingRate || '89.9%';
-  const monthlyStats = reportData?.monthlyStats || MONTHLY_COLLECTION_DATA;
+  const monthlyStats = reportData?.monthlyStats || DEFAULT_MONTHLY_COLLECTION_DATA;
 
   return (
     <div className="space-y-8">
@@ -159,7 +171,7 @@ export default function AdminReports() {
             <ResponsiveContainer width="100%" height={290}>
               <PieChart>
                 <Pie
-                  data={CATEGORY_DISTRIBUTION}
+                  data={DEFAULT_CATEGORY_DISTRIBUTION}
                   cx="50%"
                   cy="45%"
                   innerRadius={50}
@@ -167,7 +179,7 @@ export default function AdminReports() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {CATEGORY_DISTRIBUTION.map((entry, index) => (
+                  {DEFAULT_CATEGORY_DISTRIBUTION.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

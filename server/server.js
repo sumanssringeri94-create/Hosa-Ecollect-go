@@ -29,6 +29,7 @@ const globalLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
   message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes.' },
 });
 app.use('/api', globalLimiter);
@@ -39,10 +40,13 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
   message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes.' },
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/reset-password', authLimiter);
 
 // --- CORS ---
 const allowedOrigins = [
@@ -107,6 +111,7 @@ app.use(errorHandler);
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
+  process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {

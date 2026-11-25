@@ -56,6 +56,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const switchAccount = useCallback((role) => {
+    if (import.meta.env.VITE_DEMO_MODE !== 'true') {
+      return null;
+    }
     const targetUser = authService.switchRole(role);
     if (targetUser) {
       setUser(targetUser);

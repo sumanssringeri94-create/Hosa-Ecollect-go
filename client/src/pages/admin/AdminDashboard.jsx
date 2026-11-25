@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi, pickupsApi } from '../../api';
-import {
-  MONTHLY_COLLECTION_DATA,
-  CATEGORY_DISTRIBUTION,
-} from '../../data/mockData';
 import StatCard from '../../components/common/StatCard';
 import ChartCard from '../../components/common/ChartCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import PageHeader from '../../components/common/PageHeader';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import EmptyState from '../../components/common/EmptyState';
+
+const DEFAULT_CATEGORY_DISTRIBUTION = [
+  { name: 'Laptop/PC', value: 38, color: '#1C3A27' },
+  { name: 'Mobile Phone', value: 27, color: '#D97746' },
+  { name: 'TV/Monitor', value: 16, color: '#556B2F' },
+  { name: 'Battery', value: 11, color: '#C87D2A' },
+  { name: 'Charger/Cable', value: 8, color: '#7C8B82' },
+];
+
+const DEFAULT_MONTHLY_STATS = [
+  { month: 'Jun', collected: 120, recycled: 110 },
+  { month: 'Jul', collected: 190, recycled: 175 },
+  { month: 'Aug', collected: 240, recycled: 220 },
+  { month: 'Sep', collected: 310, recycled: 290 },
+  { month: 'Oct', collected: 380, recycled: 350 },
+  { month: 'Nov', collected: 210, recycled: 135 },
+];
 import {
   Package,
   Clock,
@@ -51,6 +64,7 @@ export default function AdminDashboard() {
     registeredLogistics: 0,
   });
   const [recentRequests, setRecentRequests] = useState([]);
+  const [monthlyData, setMonthlyData] = useState(DEFAULT_MONTHLY_STATS);
 
   useEffect(() => {
     fetchDashboardData();
@@ -59,10 +73,17 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const res = await adminApi.getDashboard();
-      if (res && res.stats) {
-        setStats(res.stats);
-        setRecentRequests(res.recentRequests || []);
+      const [dashRes, reportsRes] = await Promise.allSettled([
+        adminApi.getDashboard(),
+        adminApi.getReports(),
+      ]);
+
+      if (dashRes.status === 'fulfilled' && dashRes.value?.stats) {
+        setStats(dashRes.value.stats);
+        setRecentRequests(dashRes.value.recentRequests || []);
+      }
+      if (reportsRes.status === 'fulfilled' && reportsRes.value?.reports?.monthlyStats) {
+        setMonthlyData(reportsRes.value.reports.monthlyStats);
       }
     } catch (err) {
       toast.error(err.message || 'Failed to load dashboard metrics');
@@ -157,7 +178,7 @@ export default function AdminDashboard() {
             subtitle="Monthly collection volume vs processed secondary raw materials."
           >
             <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={MONTHLY_COLLECTION_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCollected" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#1C3A27" stopOpacity={0.4} />
@@ -194,7 +215,7 @@ export default function AdminDashboard() {
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
-                  data={CATEGORY_DISTRIBUTION}
+                  data={DEFAULT_CATEGORY_DISTRIBUTION}
                   cx="50%"
                   cy="45%"
                   innerRadius={55}
@@ -202,7 +223,7 @@ export default function AdminDashboard() {
                   paddingAngle={4}
                   dataKey="value"
                 >
-                  {CATEGORY_DISTRIBUTION.map((entry, index) => (
+                  {DEFAULT_CATEGORY_DISTRIBUTION.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

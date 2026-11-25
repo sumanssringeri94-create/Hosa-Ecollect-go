@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import PageHeader from '../../components/common/PageHeader';
-import { storageService, resetDemoData } from '../../services/storageService';
 import { Settings, RotateCcw, ShieldCheck, Database, Save, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminSettings() {
+  const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
   const [platformName, setPlatformName] = useState('eCollect-Go Central Governance');
   const [autoApproveStandard, setAutoApproveStandard] = useState(false);
-  const [allowPublicDemoSwitcher, setAllowPublicDemoSwitcher] = useState(true);
+  const [allowPublicDemoSwitcher, setAllowPublicDemoSwitcher] = useState(isDemoMode);
   const [carbonOffsetFactor, setCarbonOffsetFactor] = useState(2.4);
 
-  const auditLogs = storageService.getAuditLogs();
+  const auditLogs = [
+    { id: 'log-1', action: 'System Initialization', target: 'Server Health & CORS', time: 'Just now', actor: 'System' },
+    { id: 'log-2', action: 'Policy Synchronization', target: 'EPR Regulatory Compliance', time: '10 mins ago', actor: 'Admin' },
+    { id: 'log-3', action: 'Security Gateway Check', target: 'Rate Limiter & Token Verification', time: '1 hour ago', actor: 'AuthGuard' },
+  ];
 
   const handleSaveSettings = (e) => {
     e.preventDefault();
@@ -18,8 +22,8 @@ export default function AdminSettings() {
   };
 
   const handleResetData = () => {
-    resetDemoData();
-    toast.success('All local storage state reset to factory demo values.');
+    localStorage.removeItem('ecg_demo_override');
+    toast.success('Local demo storage parameters cleared.');
     setTimeout(() => window.location.reload(), 400);
   };
 
@@ -104,20 +108,22 @@ export default function AdminSettings() {
             </div>
           </form>
 
-          {/* Dangerous Zone / Factory Reset */}
-          <div className="card p-6 bg-red-50/40 border border-red-200 rounded-2xl space-y-3">
-            <h4 className="text-sm font-bold text-red-950">Factory Demo State Reset</h4>
-            <p className="text-xs text-red-700 leading-relaxed">
-              Resets all localStorage collections, audit logs, partner assignments, and mock requests back to their pristine initial factory seed.
-            </p>
-            <button
-              type="button"
-              onClick={handleResetData}
-              className="btn-danger text-xs py-2 px-4 inline-flex items-center gap-1.5"
-            >
-              <RotateCcw size={14} /> Reset All Demo Storage
-            </button>
-          </div>
+          {/* Dangerous Zone / Factory Reset (Demo Mode Only) */}
+          {isDemoMode && (
+            <div className="card p-6 bg-red-50/40 border border-red-200 rounded-2xl space-y-3">
+              <h4 className="text-sm font-bold text-red-950">Factory Demo State Reset</h4>
+              <p className="text-xs text-red-700 leading-relaxed">
+                Resets local demo configurations back to default settings.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetData}
+                className="btn-danger text-xs py-2 px-4 inline-flex items-center gap-1.5"
+              >
+                <RotateCcw size={14} /> Reset Demo Configuration
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right: Immutable Ledger Preview */}

@@ -48,7 +48,7 @@ function loadDB() {
       db = JSON.parse(data);
       if (!db.notifications) db.notifications = [];
       if (!db.users || !db.users.some(u => u.role === 'recycler')) {
-        if (process.env.NODE_ENV !== 'production' || process.env.SEED_DEMO === 'true') {
+        if (process.env.SEED_DEMO === 'true' || process.env.NODE_ENV === 'development') {
           initSeedData();
         }
         return;
@@ -58,7 +58,7 @@ function loadDB() {
       console.warn('Could not read local DB file, reinitializing...');
     }
   }
-  if (process.env.NODE_ENV !== 'production' || process.env.SEED_DEMO === 'true') {
+  if (process.env.SEED_DEMO === 'true' || process.env.NODE_ENV === 'development') {
     initSeedData();
   } else {
     db = { users: [], wasteitems: [], pickups: [], centers: [], notifications: [] };
@@ -605,6 +605,14 @@ function matchQuery(doc, query) {
         const docVal = doc[key] ? doc[key].toString() : '';
         const neVal = val.$ne ? val.$ne.toString() : '';
         if (docVal === neVal) return false;
+      } else if (val.$gt !== undefined) {
+        const dVal = doc[key] instanceof Date ? doc[key].getTime() : (typeof doc[key] === 'string' && !isNaN(Date.parse(doc[key])) ? new Date(doc[key]).getTime() : Number(doc[key]));
+        const qVal = val.$gt instanceof Date ? val.$gt.getTime() : (typeof val.$gt === 'string' && !isNaN(Date.parse(val.$gt)) ? new Date(val.$gt).getTime() : Number(val.$gt));
+        if (!(dVal > qVal)) return false;
+      } else if (val.$gte !== undefined) {
+        const dVal = doc[key] instanceof Date ? doc[key].getTime() : (typeof doc[key] === 'string' && !isNaN(Date.parse(doc[key])) ? new Date(doc[key]).getTime() : Number(doc[key]));
+        const qVal = val.$gte instanceof Date ? val.$gte.getTime() : (typeof val.$gte === 'string' && !isNaN(Date.parse(val.$gte)) ? new Date(val.$gte).getTime() : Number(val.$gte));
+        if (!(dVal >= qVal)) return false;
       }
     } else {
       const dVal = doc[key] !== undefined ? doc[key] : '';

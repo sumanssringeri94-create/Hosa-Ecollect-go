@@ -1,13 +1,43 @@
-import React, { useState } from 'react';
-import { storageService } from '../../services/storageService';
+import React, { useState, useEffect } from 'react';
+import { wasteApi } from '../../api';
 import PageHeader from '../../components/common/PageHeader';
 import Modal from '../../components/common/Modal';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import { Layers, Plus, Sparkles, AlertTriangle, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminCategories() {
-  const [categories, setCategories] = useState(storageService.getCategories());
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const res = await wasteApi.getCategories();
+        if (res && res.categories) {
+          // Normalize API categories to UI model
+          const formatted = res.categories.map((c) => ({
+            id: c.id,
+            name: c.name || c.id,
+            description: c.description || `Statutory regulated ${c.name || c.id} recovery stream.`,
+            averageWeight: c.averageWeight || `${c.co2 || 1.5} kg`,
+            hazardRating: c.hazardous ? 'Critical' : 'Medium',
+            recoverableMaterials: c.recoverableMaterials || ['Copper', 'Circuit Board Fractions', 'Ferrous Metals'],
+            disposalTip: c.disposalTip || 'Inspect casing and isolate prior to logistics handover.',
+          }));
+          setCategories(formatted);
+        }
+      } catch (err) {
+        console.error('Error fetching categories from API:', err);
+        toast.error('Could not load categories from server.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const [newCat, setNewCat] = useState({
     id: '',
@@ -35,11 +65,22 @@ export default function AdminCategories() {
     };
 
     const updated = [...categories, formattedCat];
-    storageService.saveCategories(updated);
     setCategories(updated);
     setIsAddModalOpen(false);
     toast.success(`Category ${newCat.name} registered into taxonomy!`);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="E-Waste Taxonomy & Stream Rules"
+          subtitle="Manage accepted equipment categories, hazard classification ratings, and recoverable secondary materials."
+        />
+        <LoadingSkeleton type="grid" count={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

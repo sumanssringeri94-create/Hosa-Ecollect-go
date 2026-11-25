@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { Recycle, Lock, ArrowRight, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ResetPassword() {
-  const [token, setToken] = useState('DEMO-RST-9981');
+  const [searchParams] = useSearchParams();
+  const [token, setToken] = useState(searchParams.get('token') || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,8 +15,16 @@ export default function ResetPassword() {
 
   const handleReset = async (e) => {
     e.preventDefault();
+    if (!token.trim()) {
+      toast.error('Please enter the reset verification token.');
+      return;
+    }
     if (!password || !confirmPassword) {
       toast.error('Please enter and confirm your new password.');
+      return;
+    }
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long.');
       return;
     }
     if (password !== confirmPassword) {
@@ -25,11 +34,11 @@ export default function ResetPassword() {
 
     try {
       setLoading(true);
-      await authService.resetPassword(token, password);
+      const res = await authService.resetPassword(token.trim(), password);
       setDone(true);
-      toast.success('Your password has been successfully updated!');
+      toast.success(res.message || 'Your password has been successfully updated!');
     } catch (err) {
-      toast.error('Failed to reset password.');
+      toast.error(err.message || 'Failed to reset password.');
     } finally {
       setLoading(false);
     }

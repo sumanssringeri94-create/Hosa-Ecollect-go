@@ -112,6 +112,18 @@ const centers = [
 
 const seed = async () => {
   try {
+    if (process.env.NODE_ENV === 'production' && process.env.SEED_DEMO !== 'true') {
+      console.error('❌ Refusing to seed demo data in production environment unless SEED_DEMO=true is set explicitly.');
+      process.exit(1);
+    }
+
+    const adminPassword = process.env.DEMO_ADMIN_PASSWORD || 'Admin@123';
+    const userPassword = process.env.DEMO_USER_PASSWORD || 'Demo@123';
+
+    if (!process.env.DEMO_ADMIN_PASSWORD || !process.env.DEMO_USER_PASSWORD) {
+      console.warn('⚠️  Warning: Using default demo passwords. Set DEMO_ADMIN_PASSWORD and DEMO_USER_PASSWORD in environment.');
+    }
+
     await connectDB();
 
     // Clear existing data
@@ -129,19 +141,19 @@ const seed = async () => {
     const admin = await User.create({
       name: 'Admin User',
       email: 'admin@ecollectgo.com',
-      password: 'Admin@123',
+      password: adminPassword,
       city: 'Bengaluru',
       phone: '+91 99999 00000',
       role: 'admin',
       points: 0,
     });
-    console.log(`👑 Admin created: admin@ecollectgo.com / Admin@123`);
+    console.log(`👑 Admin created: admin@ecollectgo.com / ${adminPassword}`);
 
     // Create demo user
     const demoUser = await User.create({
       name: 'Priya Sharma',
       email: 'priya@example.com',
-      password: 'Demo@123',
+      password: userPassword,
       city: 'Bengaluru',
       phone: '+91 98765 43210',
       role: 'user',
@@ -150,13 +162,13 @@ const seed = async () => {
       co2Saved: 5.6,
       level: 'Eco Warrior',
     });
-    console.log(`👤 Demo user created: priya@example.com / Demo@123`);
+    console.log(`👤 Demo user created: priya@example.com / ${userPassword}`);
 
     // Create another user
     const user2 = await User.create({
       name: 'Rahul Verma',
       email: 'rahul@example.com',
-      password: 'Demo@123',
+      password: userPassword,
       city: 'Mumbai',
       phone: '+91 91234 56789',
       role: 'user',

@@ -160,38 +160,49 @@ export const authService = {
   },
 
   forgotPassword: async (email) => {
+    let res;
     try {
       const apiUrl = import.meta.env?.VITE_API_URL || '/api';
-      const res = await fetch(`${apiUrl}/auth/forgot-password`, {
+      res = await fetch(`${apiUrl}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        return { success: true, message: data.message };
-      }
-    } catch (e) {}
-    return { success: true, message: `Password reset instructions sent to ${email}` };
+    } catch (networkError) {
+      throw new Error('Unable to connect to the authentication server. Please check your network.');
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to process password reset request.');
+    }
+    return { success: true, message: data.message };
   },
 
-  resetPassword: async (token, newPassword, email) => {
+  resetPassword: async (token, password) => {
+    let res;
     try {
       const apiUrl = import.meta.env?.VITE_API_URL || '/api';
-      const res = await fetch(`${apiUrl}/auth/reset-password`, {
+      res = await fetch(`${apiUrl}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword, email }),
+        body: JSON.stringify({ token, password }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        return { success: true, message: data.message };
-      }
-    } catch (e) {}
-    return { success: true, message: 'Your password has been successfully reset.' };
+    } catch (networkError) {
+      throw new Error('Unable to connect to the authentication server. Please check your network.');
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to reset password.');
+    }
+    return { success: true, message: data.message };
   },
 
   switchRole: (role) => {
+    if (import.meta.env?.VITE_DEMO_MODE !== 'true') {
+      return null;
+    }
     const preset = DEMO_PRESET_ACCOUNTS.find((p) => p.role === role);
     if (!preset) return null;
     const target = {

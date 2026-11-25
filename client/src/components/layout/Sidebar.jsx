@@ -157,14 +157,16 @@ export default function Sidebar({ isOpen, onClose, onOpenRoleModal }) {
               {theme.badge}
             </span>
 
-            <button
-              type="button"
-              onClick={onOpenRoleModal}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-terracotta-700 hover:text-terracotta-900 hover:underline"
-              title="Switch demo persona"
-            >
-              <Sparkles size={12} /> Switch Role
-            </button>
+            {import.meta.env.VITE_DEMO_MODE === 'true' && (
+              <button
+                type="button"
+                onClick={onOpenRoleModal}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-terracotta-700 hover:text-terracotta-900 hover:underline"
+                title="Switch demo persona"
+              >
+                <Sparkles size={12} /> Switch Role
+              </button>
+            )}
           </div>
 
           {/* Nav List */}

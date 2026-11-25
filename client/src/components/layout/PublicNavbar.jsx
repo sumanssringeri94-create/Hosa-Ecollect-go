@@ -68,21 +68,23 @@ export default function PublicNavbar() {
 
             {/* Desktop Right CTAs */}
             <div className="hidden lg:flex items-center gap-3">
-              {/* Demo Role Switcher Pill */}
-              <button
-                type="button"
-                onClick={() => setRoleModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-forest-50 hover:bg-forest-100 text-forest-900 border border-forest-200/80 text-xs font-semibold transition-all duration-150 shadow-2xs"
-                title="Switch between User, Admin, Recycler and Logistics Demo Accounts"
-              >
-                <Sparkles size={13} className="text-terracotta-600 animate-spin-slow" />
-                <span>Demo Portals</span>
-                {user && (
-                  <span className="ml-1 px-1.5 py-0.2 bg-white rounded-md text-[10px] text-earth-700 font-bold border border-forest-200">
-                    {user.role}
-                  </span>
-                )}
-              </button>
+              {/* Demo Role Switcher Pill (only in demo mode) */}
+              {import.meta.env.VITE_DEMO_MODE === 'true' && (
+                <button
+                  type="button"
+                  onClick={() => setRoleModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-forest-50 hover:bg-forest-100 text-forest-900 border border-forest-200/80 text-xs font-semibold transition-all duration-150 shadow-2xs"
+                  title="Switch between User, Admin, Recycler and Logistics Demo Accounts"
+                >
+                  <Sparkles size={13} className="text-terracotta-600 animate-spin-slow" />
+                  <span>Demo Portals</span>
+                  {user && (
+                    <span className="ml-1 px-1.5 py-0.2 bg-white rounded-md text-[10px] text-earth-700 font-bold border border-forest-200">
+                      {user.role}
+                    </span>
+                  )}
+                </button>
+              )}
 
               {isAuthenticated ? (
                 <Link
@@ -185,11 +187,13 @@ export default function PublicNavbar() {
         )}
       </header>
 
-      {/* Role Switcher Modal */}
-      <RoleSwitcherModal
-        isOpen={roleModalOpen}
-        onClose={() => setRoleModalOpen(false)}
-      />
+      {/* Role Switcher Modal (demo mode only) */}
+      {import.meta.env.VITE_DEMO_MODE === 'true' && (
+        <RoleSwitcherModal
+          isOpen={roleModalOpen}
+          onClose={() => setRoleModalOpen(false)}
+        />
+      )}
     </>
   );
 }

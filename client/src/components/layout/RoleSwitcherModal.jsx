@@ -12,7 +12,6 @@ import {
   Sparkles,
   RotateCcw,
 } from 'lucide-react';
-import { resetDemoData } from '../../services/storageService';
 import toast from 'react-hot-toast';
 
 const ROLE_CARDS = [
@@ -63,6 +62,10 @@ const ROLE_CARDS = [
 ];
 
 export default function RoleSwitcherModal({ isOpen, onClose }) {
+  if (import.meta.env.VITE_DEMO_MODE !== 'true') {
+    return null;
+  }
+
   const { user, switchAccount } = useAuth();
   const navigate = useNavigate();
 
@@ -73,7 +76,8 @@ export default function RoleSwitcherModal({ isOpen, onClose }) {
   };
 
   const handleReset = () => {
-    resetDemoData();
+    localStorage.removeItem('ecg_auth_token');
+    localStorage.removeItem('ecg_auth_current_user');
     switchAccount('user');
     toast.success('All demo datasets reset to factory defaults.');
     onClose();

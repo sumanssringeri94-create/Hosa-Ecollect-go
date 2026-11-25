@@ -11,13 +11,18 @@ const {
 } = require('../controllers/authController');
 
 const { protect } = require('../middleware/auth');
-const { registerValidator, loginValidator } = require('../middleware/validators');
+const {
+  registerValidator,
+  loginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+} = require('../middleware/validators');
 
 // Public routes
 router.post('/register', registerValidator, register);
 router.post('/login', loginValidator, login);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/forgot-password', forgotPasswordValidator, forgotPassword);
+router.post('/reset-password', resetPasswordValidator, resetPassword);
 
 // Protected routes
 router.get('/me', protect, getMe);

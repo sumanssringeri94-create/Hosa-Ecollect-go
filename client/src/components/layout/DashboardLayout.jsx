@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import RoleSwitcherModal from './RoleSwitcherModal';
 import UserAvatar from '../common/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
-import { storageService } from '../../services/storageService';
+import { notificationsApi } from '../../api';
 import {
   Menu,
   Bell,
@@ -23,8 +23,19 @@ export default function DashboardLayout({ children }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const notifications = storageService.getNotifications(user?.role, user?.id);
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    notificationsApi.getNotifications()
+      .then((res) => {
+        if (isMounted) setNotifications(res.notifications || []);
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, [user]);
+
+  const unreadCount = notifications.filter((n) => !(n.isRead || n.read)).length;
 
   return (
     <div className="min-h-screen bg-[#FBFBF9] flex">
@@ -107,8 +118,11 @@ export default function DashboardLayout({ children }) {
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        storageService.markAllNotificationsAsRead(user?.role);
+                      onClick={async () => {
+                        try {
+                          await notificationsApi.markAllAsRead();
+                          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true, read: true })));
+                        } catch (e) {}
                         setNotifDropdownOpen(false);
                       }}
                       className="text-[11px] text-forest-700 hover:underline font-medium"
@@ -167,11 +181,13 @@ export default function DashboardLayout({ children }) {
         </main>
       </div>
 
-      {/* Role Switcher Modal */}
-      <RoleSwitcherModal
-        isOpen={roleModalOpen}
-        onClose={() => setRoleModalOpen(false)}
-      />
+      {/* Role Switcher Modal (demo mode only) */}
+      {import.meta.env.VITE_DEMO_MODE === 'true' && (
+        <RoleSwitcherModal
+          isOpen={roleModalOpen}
+          onClose={() => setRoleModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

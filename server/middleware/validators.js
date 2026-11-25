@@ -46,6 +46,38 @@ const loginValidator = [
   validate,
 ];
 
+const forgotPasswordValidator = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('Email is required')
+    .isEmail().withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  validate,
+];
+
+const resetPasswordValidator = [
+  (req, res, next) => {
+    if (req.query?.token && !req.body?.token) {
+      req.body.token = req.query.token;
+    }
+    next();
+  },
+  body('token')
+    .trim()
+    .notEmpty().withMessage('Reset token is required'),
+  (req, res, next) => {
+    const password = req.body.password || req.body.newPassword;
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long',
+      });
+    }
+    next();
+  },
+  validate,
+];
+
 // Pickup validation rules
 const pickupValidator = [
   body('address')
@@ -80,6 +112,8 @@ module.exports = {
   validate,
   registerValidator,
   loginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
   pickupValidator,
   wasteValidator,
 };

@@ -1,226 +1,228 @@
-# ♻️ e-Collect Go
+# ♻️ eCollect-Go — Sustainable E-Waste & Circular Recycling Platform
 
-## 📖 Overview
+[![CI Pipeline](https://github.com/sumanssringeri94-create/Hosa-Ecollect-go/actions/workflows/ci.yml/badge.svg)](https://github.com/sumanssringeri94-create/Hosa-Ecollect-go/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-forest.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-v18%2B%20%7C%20v20%2B%20%7C%20v24%2B-2d5a3d.svg)](https://nodejs.org/)
+[![Vite](https://img.shields.io/badge/Frontend-Vite%20%2B%20React%2018-D97746.svg)](https://vitejs.dev/)
 
-e-Collect Go makes e-waste disposal effortless and rewarding. Users log their electronic items (phones, laptops, batteries, appliances), schedule home pickups, earn eco-points for recycling, and track their environmental impact. Admins manage the full pickup lifecycle and monitor platform analytics from a dedicated dashboard.
-
-
-## ✨ Features
-
-### For Citizens
-- **E-waste Logging** — Log items by category (Laptop, Mobile, TV, Battery, etc.) with condition, brand, and quantity
-- **Pickup Scheduling** — Book home pickups with address, date, and time slot (Morning / Afternoon / Evening)
-- **Eco Points & Levels** — Earn points per recycled item; progress from *Beginner* → *Eco Starter* → *Eco Warrior* → *Eco Guardian* → *Eco Champion*
-- **CO₂ Savings Tracker** — See your personal environmental impact in kg CO₂ saved
-- **Recycling Center Map** — Discover nearby drop-off centers filtered by city
-- **Leaderboard** — Compete with other users on eco-points
-- **Profile Management** — Edit name, city, and phone number
-
-### For Administrators
-- **All Pickups View** — See every pickup request across the platform with filters
-- **Pickup Lifecycle** — Approve, reject, or mark pickups as completed; attach admin notes
-- **Analytics Dashboard** — Overview of total pickups, CO₂ saved, items recycled, and pending requests
-- **User Management** — View all users and toggle account active/inactive status
-- **Waste Item Oversight** — Review all logged waste items platform-wide
+eCollect-Go is an end-to-end digital e-waste reverse logistics and circular recycling platform. It bridges citizens, certified recycling facilities, zero-emission green logistics fleets, and municipal governance administrators under an automated, verifiable chain-of-custody protocol.
 
 ---
 
-## 🏗️ Architecture
+## 🏛️ Platform Personas & Capabilities (4 Distinct Roles)
 
+eCollect-Go supports 4 dedicated user roles, each with its own tailored dashboard, permissions, and workflow:
+
+### 1. 👤 Citizen / Enterprise User
+- **E-Waste Inventory Logging**: Catalog discarded electronics across 10 statutory categories (Laptops, Mobiles, Batteries, Monitors, etc.) with condition, brand, and weight estimations.
+- **On-Demand Doorstep Collection**: Schedule doorstep pickup with precise time slots, address geolocation, and special hazard handling instructions.
+- **Eco-Gamification & Carbon Ledger**: Accrue eco-points and tier up from *Beginner* → *Eco Starter* → *Eco Warrior* → *Eco Guardian* → *Eco Champion*. Track cumulative avoided CO₂ emissions in kilograms.
+- **Digital Certificates**: Generate verifiable recycling certificates detailing recovered precious metals (Gold, Silver, Copper, Rare Earths).
+
+### 2. 🛡️ Central Governance Administrator
+- **Control Tower & Dispatch**: Verify incoming collection manifests, review item hazard ratings, and assign orders to verified recycling facilities and green logistics fleets.
+- **Auditing & Partner Accreditation**: Inspect licenses (e.g. SPCB/CPCB statutory authorizations), approve or deactivate recyclers, and monitor logistics capacity.
+- **ESG & Statutory Analytics**: Live reporting on municipal throughput, material diversion rates, LCA carbon offsets, and compliance assay logs.
+
+### 3. 🏭 Certified Recycler Facility
+- **Facility Intake Manifests**: Accept incoming consignments handed over by logistics providers.
+- **Assay & Processing Logs**: Record actual received weights, secondary materials recovered (e.g. 0.4kg Copper, 1.2kg Aluminum), and hazardous fraction neutralizations.
+- **Batch Processing Throughput**: Track monthly tonnage processed against facility operational capacity.
+
+### 4. 🚚 Zero-Emission Logistics Fleet
+- **Route Dispatch & Pickups**: Review assigned pickups, accept manifests, and execute scheduled doorstep collections.
+- **Chain of Custody Tracking**: Real-time status transitions (`assigned` → `pickup_scheduled` → `collected` → `in_transit` → `delivered`).
+- **Fleet Availability**: Toggle operational status and vehicle specifications (EV Vans, Cargo E-Bikes).
+
+---
+
+## 🏗️ Architecture & Technology Stack
+
+```
 ecollect-go/
-├── client/                  # React + Vite frontend
-│   └── src/
-│       ├── api/             # Axios API client (index.js)
-│       ├── components/      # Shared UI (Navbar, Spinner, StatusBadge, ConfirmModal, EmptyState)
-│       ├── context/         # AuthContext — JWT state + user session
-│       └── pages/           # Home, Login, Register, Dashboard, WastePage,
-│                            #   PickupPage, MapPage, AdminPage, NotFound
-│
-└── server/                  # Node.js + Express backend
-    ├── config/
-    │   └── db.js            # MongoDB connection via Mongoose
-    ├── controllers/         # Business logic per domain
-    │   ├── authController.js
-    │   ├── userController.js
-    │   ├── wasteController.js
-    │   ├── pickupController.js
-    │   └── centerController.js
-    ├── middleware/
-    │   ├── auth.js          # JWT guard (protect) + role gate (adminOnly)
-    │   └── errorHandler.js  # Global error handler
-    ├── models/              # Mongoose schemas
-    │   ├── User.js
-    │   ├── WasteItem.js
-    │   ├── Pickup.js
-    │   └── Center.js
-    ├── routes/              # Express routers
-    │   ├── auth.js
-    │   ├── users.js
-    │   ├── waste.js
-    │   ├── pickups.js
-    │   └── centers.js
-    ├── seed/
-    │   └── seed.js          # Sample data seeder
-    ├── utils/
-    │   └── token.js         # JWT sign / verify helpers
-    └── server.js            # App entry point
-
-### Data Models
-
-| Model | Key Fields |
-|---|---|
-| **User** | name, email, password (bcrypt), city, role (user/admin), points, totalItemsRecycled, co2Saved, level, isActive |
-| **WasteItem** | user, category, itemName, brand, condition, quantity, pointsEarned, co2Saved, status (logged → pickup_requested → collected → recycled), pickup |
-| **Pickup** | user, items[], address, city, scheduledDate, timeSlot, status (pending → approved/rejected → completed), adminNote, pointsAwarded |
-| **Center** | name, address, city, coordinates {lat, lng}, accepts[], hours, rating, capacity, isActive |
-
-### API Endpoints
-
-| Prefix | Routes | Auth |
-|---|---|---|
-| `POST /api/auth/register` | Register new user | Public |
-| `POST /api/auth/login` | Login + receive JWT | Public |
-| `GET /api/auth/me` | Get current user | JWT |
-| `GET /api/users/profile` | Fetch own profile | JWT |
-| `PUT /api/users/profile` | Update profile | JWT |
-| `GET /api/users/leaderboard` | Points leaderboard | JWT |
-| `GET /api/users/admin/all` | All users | Admin |
-| `PUT /api/users/admin/:id/toggle` | Activate/deactivate user | Admin |
-| `GET /api/waste/categories` | List waste categories | Public |
-| `POST /api/waste` | Log a waste item | JWT |
-| `GET /api/waste/my` | My logged items | JWT |
-| `DELETE /api/waste/:id` | Delete waste item | JWT |
-| `GET /api/waste/admin/all` | All items | Admin |
-| `POST /api/pickups` | Schedule pickup | JWT |
-| `GET /api/pickups/my` | My pickups | JWT |
-| `DELETE /api/pickups/:id` | Cancel pickup | JWT |
-| `GET /api/pickups/admin/all` | All pickups | Admin |
-| `GET /api/pickups/admin/analytics` | Platform analytics | Admin |
-| `PUT /api/pickups/admin/:id/approve` | Approve pickup | Admin |
-| `PUT /api/pickups/admin/:id/reject` | Reject pickup | Admin |
-| `PUT /api/pickups/admin/:id/complete` | Mark complete + award points | Admin |
-| `GET /api/centers` | Centers by city | Public |
-
-### Gamification System
-
-Points are awarded per category when a pickup is marked **completed**:
-
-| Category | Points | CO₂ Saved |
-|---|---|---|
-| Refrigerator | 300 | 5.0 kg |
-| Washing Machine | 250 | 4.0 kg |
-| TV / Monitor | 200 | 3.0 kg |
-| Laptop / PC | 150 | 1.2 kg |
-| Printer | 120 | 1.0 kg |
-| Tablet | 100 | 0.9 kg |
-| Mobile Phone | 80 | 0.7 kg |
-| Battery | 30 | 0.3 kg |
-| Charger / Cable | 20 | 0.1 kg |
-| Other Electronics | 50 | 0.5 kg |
-
-User levels update automatically based on cumulative points:
-
-```
-0      → Beginner
-200    → Eco Starter
-800    → Eco Warrior
-2,000  → Eco Guardian
-5,000  → Eco Champion
+├── .github/workflows/
+│   └── ci.yml               # GitHub Actions CI workflow (lint, test, client build)
+├── client/                  # React 18 + Vite SPA frontend
+│   ├── src/
+│   │   ├── api/             # Axios API client (JWT interceptor, 401 redirect, typed endpoints)
+│   │   ├── components/      # Common components, layout sidebars, modals, skeleton loaders
+│   │   ├── context/         # AuthContext (real JWT auth state + optional demo switch)
+│   │   ├── pages/           # Public pages & 4 distinct portal suites (User, Admin, Recycler, Logistics)
+│   │   └── services/        # Client auth service
+│   └── index.html           # HTML5 entry with Open Graph & Twitter Cards
+└── server/                  # Node.js + Express 4 RESTful backend
+    ├── config/db.js         # MongoDB connection + fallback local JSON embedded database
+    ├── controllers/         # Business logic for auth, pickups, waste, admin, recyclers, logistics
+    ├── middleware/          # Helmet, rate-limiters, JWT protect, role gates, express-validator
+    ├── models/              # Dual Mongoose & LocalDb proxy data models
+    ├── routes/              # Express API route declarations
+    ├── tests/               # Native node:test security & integration test suite
+    └── server.js            # Hardened server entry with strict startup assertions
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🔒 Security & Hardening Architecture
 
-### Prerequisites
+1. **Mandatory Secret Enforcement**: The server asserts `process.env.JWT_SECRET` on initialization and immediately halts startup with exit code 1 if missing. No insecure hardcoded fallbacks exist.
+2. **Strict Origin CORS Filtering**: Only approved origins (`localhost:5173`, `CLIENT_URL`, and production deployment domains) are permitted. Rejected cross-origin requests receive an explicit, clean HTTP 403 Forbidden JSON payload.
+3. **Multi-Tier Rate Limiting**:
+   - **Auth Gateways**: Strict rate limiting (`10 requests / 15 minutes / IP`) applied to `/api/auth/login`, `/api/auth/register`, `/api/auth/forgot-password`, and `/api/auth/reset-password`.
+   - **Global Rate Limiter**: 100 requests / 15 minutes / IP across all `/api` endpoints.
+4. **Defensive Password Reset Protocol**:
+   - `forgotPassword` generates a cryptographically secure 32-byte token (`crypto.randomBytes(32)`), stores only its SHA-256 hash with a 30-minute expiry, and returns an identical generic response regardless of whether the email exists.
+   - `resetPassword` validates the raw token against the stored SHA-256 hash, enforces an 8-character minimum, and invalidates the token upon single use.
+   - Rejects missing, invalid, or expired tokens with a generic HTTP 400 (never leaking user existence).
+5. **Express Validator**: Strict parameter sanitization and validation on authentication, pickup scheduling, and waste item submission.
+6. **Payload Size Guard**: `express.json({ limit: '1mb' })` defends against denial-of-service memory pressure.
+7. **Production Crash Resilience**: Uncaught exceptions are cleanly logged and terminate the process (`process.exit(1)`) allowing process managers (e.g. systemd, Docker, Kubernetes) to restart healthy containers.
 
-- Node.js ≥ 18
-- MongoDB (local or Atlas)
+---
 
-### 1. Clone the repository
+## 📡 Complete REST API Reference
 
+### 🔐 Authentication (`/api/auth`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Public | Register new user, recycler, or logistics partner |
+| `POST` | `/api/auth/login` | Public | Authenticate credentials & return signed JWT token |
+| `GET` | `/api/auth/me` | Private | Retrieve authenticated user profile |
+| `PUT` | `/api/auth/profile` | Private | Update profile details (phone, city, company, vehicle) |
+| `POST` | `/api/auth/forgot-password` | Public | Secure token generation with SHA-256 storage |
+| `POST` | `/api/auth/reset-password` | Public | Single-use password reset verification |
+
+### 📦 Pickups (`/api/pickups`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/pickups` | Private (User) | Schedule new e-waste doorstep pickup |
+| `GET` | `/api/pickups/my` | Private (User) | List user's active and past pickups |
+| `GET` | `/api/pickups/:id` | Private | Fetch detailed pickup manifest |
+| `DELETE` | `/api/pickups/:id` | Private (User) | Cancel scheduled pickup |
+| `GET` | `/api/pickups/admin/all` | Admin | Filter and inspect all platform pickups |
+| `PUT` | `/api/pickups/admin/:id/verify` | Admin | Verify manifest and advance pickup |
+| `PUT` | `/api/pickups/admin/:id/assign-recycler` | Admin | Assign manifest to certified recycling partner |
+| `PUT` | `/api/pickups/admin/:id/assign-logistics` | Admin | Assign manifest to green logistics fleet |
+| `PUT` | `/api/pickups/admin/:id/complete` | Admin | Finalize order and award eco-points |
+
+### ♻️ Waste Inventory (`/api/waste`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/waste/categories` | Public | List standardized categories with CO₂ and hazard metadata |
+| `POST` | `/api/waste` | Private (User) | Log item to user's recycling inventory |
+| `GET` | `/api/waste/my` | Private (User) | Retrieve logged user items |
+| `DELETE` | `/api/waste/:id` | Private (User) | Remove logged item |
+
+### 🛡️ Admin Governance (`/api/admin`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/admin/dashboard` | Admin | Control tower aggregated metrics and counts |
+| `GET` | `/api/admin/users` | Admin | Search, filter, and paginate platform users |
+| `PUT` | `/api/admin/users/:id/status` | Admin | Activate or suspend user accounts |
+| `GET` | `/api/admin/recyclers` | Admin | List registered recycling facilities |
+| `PUT` | `/api/admin/recyclers/:id/verify` | Admin | Verify statutory environmental licenses |
+| `GET` | `/api/admin/logistics` | Admin | List registered green logistics partners |
+| `GET` | `/api/admin/reports` | Admin | Statutory LCA carbon reports and monthly throughput |
+
+### 🏭 Recycler Portal (`/api/recyclers`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/recyclers/dashboard` | Recycler | Intake metrics, throughput, and active batches |
+| `GET` | `/api/recyclers/assigned` | Recycler | View assigned consignments |
+| `PUT` | `/api/recyclers/pickups/:id/accept` | Recycler | Accept consignment assignment |
+| `PUT` | `/api/recyclers/pickups/:id/reject` | Recycler | Reject assignment with statutory reason |
+| `PUT` | `/api/recyclers/pickups/:id/operations` | Recycler | Log assay results, weights, and recovery notes |
+
+### 🚚 Logistics Portal (`/api/logistics`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/logistics/dashboard` | Logistics | Route metrics and vehicle dispatch summary |
+| `GET` | `/api/logistics/pickups` | Logistics | Assigned pickup routes |
+| `PUT` | `/api/logistics/pickups/:id/accept` | Logistics | Accept route dispatch |
+| `PUT` | `/api/logistics/pickups/:id/collected` | Logistics | Mark item collected from doorstep |
+| `PUT` | `/api/logistics/pickups/:id/delivered` | Logistics | Confirm delivery to recycling center |
+| `PUT` | `/api/logistics/availability` | Logistics | Update vehicle fleet status and capacity |
+
+---
+
+## ⚙️ Environment Configuration
+
+### Backend (`server/.env`)
+| Variable | Required | Description | Example |
+|---|---|---|---|
+| `NODE_ENV` | Yes | Runtime environment | `development` or `production` |
+| `PORT` | No | HTTP listener port (defaults to 5000) | `5000` |
+| `JWT_SECRET` | **YES** | Cryptographic key for signing JWTs (min 32 chars) | `your-32-character-secure-jwt-secret` |
+| `JWT_EXPIRES_IN`| No | Token validity duration | `7d` |
+| `CLIENT_URL` | Recommended | Whitelisted frontend URL for CORS | `https://hosa-ecollect-go.vercel.app` |
+| `USE_LOCAL_DB` | Yes | `true` for zero-setup local dev file DB; `false` for MongoDB | `false` |
+| `MONGO_URI` | If not local DB | MongoDB connection string | `mongodb+srv://...` |
+| `SEED_DEMO` | No | Explicit override to enable demo seeding | `true` |
+
+### Frontend (`client/.env`)
+| Variable | Required | Description | Example |
+|---|---|---|---|
+| `VITE_API_URL` | No | Base API URL (defaults to `/api` proxy in dev) | `https://your-api.onrender.com/api` |
+| `VITE_DEMO_MODE` | No | Set `true` to enable instant role switcher modal & demo credentials | `false` |
+
+---
+
+## 🚀 Local Development Setup
+
+### 1. Clone & Setup
 ```bash
-git clone https://github.com/sumanssringeri94-create/ecollect-go.git
-cd ecollect-go
+git clone https://github.com/sumanssringeri94-create/Hosa-Ecollect-go.git
+cd Hosa-Ecollect-go
 ```
 
-### 2. Configure the backend
+### 2. Configure & Start Backend
+```bash
+cd server
+cp .env.example .env
+
+# Edit server/.env and supply a secure JWT_SECRET
+# For quick local testing without MongoDB, keep USE_LOCAL_DB=true
+npm install
+npm test            # Run integration test suite
+npm run dev         # Starts server on http://localhost:5000
+```
+
+### 3. Configure & Start Frontend
+```bash
+cd ../client
+cp .env.example .env
+npm install
+npm run build       # Verify production build
+npm run dev         # Starts Vite dev server on http://localhost:5173
+```
+
+---
+
+## 🧪 Testing
+
+The platform includes automated security and API integration tests run via Node's native test runner (`node:test`):
 
 ```bash
 cd server
-cp .env.example .env   # or create .env manually
+npm test
 ```
 
-Required environment variables:
-
-```env
-NODE_ENV=development
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/ecollect-go
-JWT_SECRET=your_secret_key_here
-JWT_EXPIRE=7d
-```
-
-Install dependencies and start:
-
-```bash
-npm install
-npm run dev         # starts with nodemon on :5000
-```
-
-Seed sample recycling centers:
-
-```bash
-npm run seed
-```
-
-### 3. Configure the frontend
-
-```bash
-cd ../client
-npm install
-npm run dev         # starts Vite dev server on :5173
-```
-
-### 4. Open the app
-
-Navigate to https://ecollect-go-1.onrender.com
+Test coverage verifies:
+- Password reset fails without token (HTTP 400)
+- Password reset fails with invalid or unhashed token (HTTP 400)
+- Password reset fails with expired token (HTTP 400)
+- Single-use token succeeds upon valid submission and is invalidated immediately on subsequent reuse.
 
 ---
 
-## 🌐 Deployment
+## 🚢 Continuous Integration
 
-| Layer | Platform |
-|---|---|
-| Frontend | [Vercel](https://vercel.com) (`client/vercel.json` included) |
-| Backend | Any Node.js host (Render, Railway, Fly.io) |
-| Database | [MongoDB Atlas](https://www.mongodb.com/atlas) |
-
-The frontend is configured to proxy `/api` requests to the backend via `vite.config.js`. In production, set the API base URL as an environment variable.
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, React Router v6, Vite, Tailwind CSS, Axios, react-hot-toast, Lucide React |
-| Backend | Node.js, Express 4, Mongoose 7, JWT (jsonwebtoken), bcryptjs, express-validator, Morgan |
-| Database | MongoDB |
-| Auth | JWT Bearer tokens, bcrypt password hashing (salt rounds: 12) |
-
----
-
-## 🔒 Security
-
-- Passwords hashed with **bcryptjs** (12 salt rounds) before storage
-- All sensitive routes protected by the `protect` middleware (JWT verification)
-- Admin-only routes gated behind the `adminOnly` middleware (role check)
-- CORS restricted to known origins (localhost and Vercel deployment)
-- Passwords excluded from all query results via Mongoose `select: false`
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and pull request to `main`:
+1. Checks out repository on Node.js v20.
+2. Installs server dependencies and executes backend security test suite.
+3. Installs client dependencies and compiles production Vite bundle.
 
 ---
 
 ## 📄 License
 
-MIT
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
